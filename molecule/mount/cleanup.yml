@@ -1,0 +1,81 @@
+---
+- name: "Cleanup"
+  hosts: "all"
+  become: True
+  tasks:
+    - name: "Cleanup | Unmount all CIFS shares"
+      ansible.posix.mount:
+        path: "{{ item.path }}"
+        state: "absent"
+      loop: "{{ mount_dirs }}"
+      when: mount_dirs is defined
+
+    - name: "Cleanup | Remove mount directories"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: "absent"
+      loop: "{{ mount_dirs }}"
+      when: mount_dirs is defined
+
+    - name: "Cleanup | Remove credentials files"
+      ansible.builtin.file:
+        path: "/etc/.smbcreds-{{ item }}"
+        state: "absent"
+      loop: "{{ mount_used_creds }}"
+      when: mount_used_creds is defined
+
+    # Clean up Samba server (from config role prepare stage)
+    - name: "Cleanup | Stop samba services"
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: "stopped"
+        enabled: False
+      loop:
+        - "smbd"
+        - "nmbd"
+      ignore_errors: True
+      register: mount_disable_smb
+
+    - name: "Cleanup | Remove samba users from database"
+      ansible.builtin.command: >-
+        pdbedit -x {{ item.name }}
+      loop: "{{ config_smbusers }}"
+      when: config_smbusers is defined
+      changed_when: False
+      ignore_errors: True
+      register: mount_delete_smdusers
+
+    - name: "Cleanup | Remove test share directories"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: "absent"
+      loop: "{{ config_smbshares }}"
+      when: config_smbshares is defined
+
+    - name: "Cleanup | Remove smbuseradd script"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: "absent"
+      loop:
+        - "/etc/samba/smb.conf"
+        - "/usr/bin/smbuseradd"
+
+    - name: "Cleanup | Remove samba packages"
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: "absent"
+        purge: True
+      loop:
+        - "samba"
+        - "samba-client"
+        - "cifs-utils"
+
+    - name: "Cleanup | Autoremove packages (apt)"
+      ansible.builtin.apt:
+        autoremove: True
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: "Cleanup | Remove samba group"
+      ansible.builtin.group:
+        name: "samba"
+        state: "absent"

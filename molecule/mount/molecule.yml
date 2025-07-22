@@ -1,0 +1,32 @@
+---
+dependency:
+  name: "galaxy"
+  options:
+    requirements-file: "molecule/mount/requirements.yml"
+
+driver:
+  name: "default"
+  options:
+    managed: False
+    ansible_connection_options:
+      ansible_connection: "local"
+
+platforms:
+  - name: "localhost"
+
+provisioner:
+  name: "ansible"
+
+verifier:
+  name: "testinfra"
+  options:
+    sudo: True
+
+scenario:
+  name: "mount"
+  test_sequence:
+    - "prepare"
+    - "converge"
+    - "idempotence"
+    - "verify"
+    - "cleanup"
