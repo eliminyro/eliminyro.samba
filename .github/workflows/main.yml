@@ -1,0 +1,122 @@
+---
+name: Molecule CI
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.merged == true ||
+      contains(fromJSON('["opened", "synchronize"]'), github.event.action)
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/eliminyro/ansible-tests:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ansible_collections/eliminyro/samba
+      - name: Run ansible-lint tests
+        run: ansible-lint -c .ansible-lint .
+        working-directory: ansible_collections/eliminyro/samba
+      - name: Run yamllint tests
+        run: yamllint -c .yamllint .
+        working-directory: ansible_collections/eliminyro/samba
+
+  sanity:
+    needs: lint
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/eliminyro/ansible-tests:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ansible_collections/eliminyro/samba
+      - name: Run sanity tests
+        run: ansible-test sanity --docker -v
+        working-directory: ansible_collections/eliminyro/samba
+
+  changes:
+    runs-on: ubuntu-latest
+    needs: sanity
+    outputs:
+      config: ${{ steps.changes.outputs.config }}
+      mount: ${{ steps.changes.outputs.mount }}
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            config:
+              - 'roles/config/**'
+              - 'molecule/config/**'
+            mount:
+              - 'roles/mount/**'
+              - 'molecule/mount/**'
+
+  molecule-config:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.config == 'true'
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip molecule[default] molecule-plugins testinfra pytest ansible-core>=2.15
+
+      - name: Run Molecule tests for config role
+        run: |
+          molecule test -s config
+        env:
+          PY_COLORS: 1
+          ANSIBLE_FORCE_COLOR: 1
+
+  molecule-mount:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.mount == 'true'
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip molecule[default] molecule-plugins testinfra pytest ansible-core>=2.15
+
+      - name: Run Molecule tests for mount role
+        run: |
+          molecule test -s mount
+        env:
+          PY_COLORS: 1
+          ANSIBLE_FORCE_COLOR: 1
