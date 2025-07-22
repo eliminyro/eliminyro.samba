@@ -1,0 +1,9 @@
+.vscode
+.ansible/
+.prettierignore
+.prettierrc.json
+.DS_Store
+*.tar.gz
+__pycache__/
+ansible_collections/
+tests/output/
