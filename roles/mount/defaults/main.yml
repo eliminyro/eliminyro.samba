@@ -1,0 +1,14 @@
+---
+
+mount_credentials:
+  default:
+    username: "username"
+    password: "password"
+
+mount_dirs:
+  - src: "{{ cifs_server }}/mnt"
+    path: "/mnt"
+    credentials: "default"
+
+mount_opts: "credentials=/etc/.smbcred,vers=3.1.1"
+mount_used_creds: "{{ cifs_mount_dirs | map(attribute='credentials') | unique | list }}"
