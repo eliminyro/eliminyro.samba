@@ -1,0 +1,57 @@
+---
+- name: "Cleanup"
+  hosts: "all"
+  become: True
+  tasks:
+    - name: "Cleanup | Stop samba services"
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: "stopped"
+        enabled: False
+      loop:
+        - "smbd"
+        - "nmbd"
+      ignore_errors: True
+      register: config_disable_smb
+
+    - name: "Cleanup | Remove samba users from database"
+      ansible.builtin.shell: >
+        pdbedit -x {{ item.name }}
+      loop: "{{ config_smbusers }}"
+      when: config_smbusers is defined
+      changed_when: False
+      ignore_errors: True
+      register: config_delete_smbusers
+
+    - name: "Cleanup | Remove test share directories"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: "absent"
+      loop: "{{ config_smbshares }}"
+      when: config_smbshares is defined
+
+    - name: "Cleanup | Remove smbuseradd script"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: "absent"
+      loop:
+        - "/etc/samba/smb.conf"
+        - "/usr/bin/smbuseradd"
+
+    - name: "Cleanup | Remove samba packages"
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: "absent"
+        purge: True
+      loop:
+        - "samba"
+
+    - name: "Cleanup | Autoremove packages (apt)"
+      ansible.builtin.apt:
+        autoremove: True
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: "Cleanup | Remove samba group"
+      ansible.builtin.group:
+        name: "samba"
+        state: "absent"

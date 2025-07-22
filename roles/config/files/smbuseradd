@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+useradd -M -s /usr/sbin/nologin -U -G samba $1

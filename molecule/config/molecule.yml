@@ -1,0 +1,27 @@
+---
+
+driver:
+  name: "default"
+  options:
+    managed: False
+    ansible_connection_options:
+      ansible_connection: "local"
+
+platforms:
+  - name: "localhost"
+
+provisioner:
+  name: "ansible"
+
+verifier:
+  name: "testinfra"
+  options:
+    sudo: True
+
+scenario:
+  name: "config"
+  test_sequence:
+    - "converge"
+    - "idempotence"
+    - "verify"
+    - "cleanup"

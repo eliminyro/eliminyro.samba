@@ -1,0 +1,30 @@
+---
+- name: "Mount | Install cifs-utils package"
+  ansible.builtin.package:
+    name: "cifs-utils"
+    state: present
+
+- name: "Mount | Create all the directories"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: "directory"
+    mode: "0755"
+  loop: "{{ mount_dirs }}"
+
+- name: "Mount | Create credentials files"
+  ansible.builtin.template:
+    dest: "/etc/.smbcreds-{{ loop_item }}"
+    src: "smbcreds.j2"
+    mode: "0600"
+  loop: "{{ mount_used_creds }}"
+  loop_control:
+    loop_var: "loop_item"
+
+- name: "Mount | Mount the shares to the dirs"
+  ansible.posix.mount:
+    state: mounted
+    fstype: cifs
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    opts: "credentials=/etc/.smbcreds-{{ item.credentials }},{{ item.opts }}"
+  loop: "{{ mount_dirs }}"
