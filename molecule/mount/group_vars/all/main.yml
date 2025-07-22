@@ -1,0 +1,26 @@
+---
+# Variables for config role (Samba server setup)
+config_smbshares:
+  - name: "TestShare"
+    path: "/srv/samba/test"
+    readonly: "no"
+    owner: "root"
+
+config_smbusers:
+  - name: "testuser"
+    password: "testpass123"
+
+# Variables for mount role (Samba client mounting)
+mount_credentials:
+  test:
+    username: "testuser"
+    password: "testpass123"
+
+mount_dirs:
+  - src: "//127.0.0.1/TestShare"
+    path: "/mnt/test-mount"
+    credentials: "test"
+    opts: "vers=3.1.1,uid=1000,gid=1000"
+
+mount_used_creds:
+  - "test"

@@ -1,0 +1,32 @@
+[global]
+# general settings
+   map to guest = Bad User
+   server role = standalone server
+   logging = systemd
+
+# Apple compatibility
+   fruit:copyfile = yes
+
+# User settings
+   add user script = /usr/bin/smbuseradd %u
+   unix password sync = yes
+   passwd program = /usr/bin/passwd %u
+   passwd chat = "*New Password:*" %n\n "*Reenter New Password:*" %n\n "*Password changed.*"
+
+{% for share in config_smbshares %}
+# Share {{ share.name }}
+[{{ share.name }}]
+   comment = {{ share.comment | default('Share ' + share.name) }}
+   path = {{ share.path }}
+   read only = {{ share.readonly | default('yes') }}
+   browseable = {{ share.browseable | default('yes') }}
+   printable = {{ share.printable | default('no') }}
+   public = {{ share.public | default('no') }}
+
+   create mask = {{ share.create_mask | default('0664') }}
+   directory mask = {{ share.directory_mask | default('2775') }}
+   force create mode = {{ share.create_mask | default('0664') }}
+   force directory mode = {{ share.directory_mask | default('2775') }}
+   force user = {{ share.owner | default('root') }}
+   force group = {{ share.group | default('samba') }}
+{% endfor %}
