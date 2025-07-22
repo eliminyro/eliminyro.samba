@@ -1,0 +1,6 @@
+---
+- name: "Prepare"
+  hosts: "all"
+  become: True
+  roles:
+    - eliminyro.samba.config

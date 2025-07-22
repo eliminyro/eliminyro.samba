@@ -1,0 +1,9 @@
+---
+config_smbshares:
+  - name: "TestShare"
+    path: "/srv/samba/test"
+    readonly: "no"
+    owner: "root"
+config_smbusers:
+  - name: testuser
+    password: "testpass123"
