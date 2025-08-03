@@ -3,6 +3,7 @@
   ansible.builtin.package:
     name:
       - "samba"
+      - "samba-client"
     state: "present"
 
 - name: "Config | Generate smb.conf file"
