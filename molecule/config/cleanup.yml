@@ -45,6 +45,7 @@
         purge: True
       loop:
         - "samba"
+        - "samba-client"
 
     - name: "Cleanup | Autoremove packages (apt)"
       ansible.builtin.apt:

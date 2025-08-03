@@ -51,7 +51,7 @@
   no_log: True
 
 - name: "Config | Set samba passwords correctly"
-  ansible.builtin.shell: >
+  ansible.builtin.shell: >-
     set -e -o pipefail
     && (smbclient -U {{ item.name }}%{{ item.password }} -L 127.0.0.1 2>&1 > /dev/null)
     || (echo -e "{{ item.password }}\n{{ item.password }}")
@@ -61,7 +61,7 @@
   register: "config_samba_verify_users"
   changed_when: "'New SMB password' in config_samba_verify_users.stdout"
   loop: "{{ config_smbusers }}"
-  # no_log: True
+  no_log: True
 
 - name: "Config | Create share directories"
   ansible.builtin.file:
