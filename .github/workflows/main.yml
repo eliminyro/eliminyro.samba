@@ -92,7 +92,7 @@ jobs:
 
       - name: Run Molecule tests for config role
         run: |
-          molecule test -s config
+          molecule test -s config -- -vvv
         env:
           PY_COLORS: 1
           ANSIBLE_FORCE_COLOR: 1
