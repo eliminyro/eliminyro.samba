@@ -22,5 +22,4 @@ mount_dirs:
     credentials: "test"
     opts: "vers=3.1.1,uid=1000,gid=1000"
 
-mount_used_creds:
-  - "test"
+mount_used_creds: "{{ mount_dirs | map(attribute='credentials') | unique | list }}"
