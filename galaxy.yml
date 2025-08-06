@@ -1,7 +1,7 @@
 ---
 namespace: "eliminyro"
 name: "samba"
-version: 1.0.0
+version: 1.0.1
 description: "An Ansible role to deploy a Samba server and mount shares"
 readme: "README.md"
 authors:
